@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4-Pillar Respiratory Assessment — Prototype</title>
+<style>
+  :root{
+    --bg:#FAF9F5;
+    --panel:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#5B6572;
+    --line:#E4E1D6;
+    --steel:#3B6E8F;
+    --steel-dark:#254D66;
+    --steel-tint:#EAF1F4;
+    --highlight:#FFF59D;
+    --deficit:#B5453D;
+    --deficit-tint:#F8E9E7;
+    --mild:#B6842A;
+    --mild-tint:#FBF1DF;
+    --normal:#4F7C5D;
+    --normal-tint:#E9F1EA;
+    --serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:48px 32px 96px;}
+  header{margin-bottom:40px;max-width:640px;}
+  header .kicker{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.02em;
+    color:var(--steel-dark);
+    margin:0 0 14px;
+  }
+  h1{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:38px;
+    line-height:1.15;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  header p{
+    font-size:15.5px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:28px;
+    align-items:start;
+  }
+  @media (max-width:880px){
+    .layout{grid-template-columns:1fr;}
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:4px;
+  }
+  .form-panel{
+    padding:28px 26px 30px;
+    position:sticky;
+    top:24px;
+  }
+  @media (max-width:880px){ .form-panel{position:static;} }
+  .form-panel h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:19px;
+    margin:0 0 20px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .field-group{margin-bottom:22px;}
+  .field-group:last-of-type{margin-bottom:26px;}
+  .field-group > .group-label{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--steel-dark);
+    margin-bottom:12px;
+    display:block;
+  }
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    font-size:13.5px;
+    color:var(--ink);
+    margin-bottom:7px;
+  }
+  .field label .val{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--steel-dark);
+    font-weight:600;
+  }
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--steel);
+    height:4px;
+  }
+  select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:13.5px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .toggle-row{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:3px;
+    overflow:hidden;
+  }
+  .toggle-row button{
+    flex:1;
+    padding:8px 0;
+    border:none;
+    background:#fff;
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .toggle-row button + button{border-left:1px solid var(--line);}
+  .toggle-row button.active{background:var(--steel);color:#fff;}
+  .check-field{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    font-size:13.5px;
+    color:var(--ink);
+    cursor:pointer;
+    margin-bottom:10px;
+  }
+  .check-field:last-child{margin-bottom:0;}
+  .check-field input{accent-color:var(--steel);width:15px;height:15px;}
+  .run-btn{
+    width:100%;
+    padding:13px 0;
+    background:var(--steel-dark);
+    color:#fff;
+    border:none;
+    border-radius:3px;
+    font-family:var(--sans);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .run-btn:hover{background:#1c3d52;}
+
+  .results-panel{padding:30px 30px 34px;min-height:520px;}
+  .results-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:6px;
+  }
+  .results-head h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:19px;
+    margin:0;
+  }
+  .results-head .subject-id{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .empty-state{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    height:440px;
+    color:var(--ink-soft);
+    max-width:380px;
+  }
+  .empty-state .num{
+    font-family:var(--serif);
+    font-size:15px;
+    color:var(--steel);
+    margin-bottom:10px;
+  }
+  .empty-state p{font-size:14px;line-height:1.6;margin:0;}
+
+  .chart-row{
+    display:grid;
+    grid-template-columns:300px 1fr;
+    gap:28px;
+    margin:22px 0 28px;
+    align-items:center;
+  }
+  @media (max-width:640px){ .chart-row{grid-template-columns:1fr;} }
+  .legend-note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.7;
+  }
+  .legend-note .dot{
+    display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;
+  }
+
+  .pillar-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+    margin-bottom:24px;
+  }
+  @media (max-width:640px){ .pillar-grid{grid-template-columns:1fr;} }
+  .pillar-card{
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:16px 17px;
+  }
+  .pillar-card .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:10px;
+  }
+  .pillar-card .top .name{font-size:14.5px;font-weight:600;}
+  .badge{
+    font-size:11px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .badge.normal{background:var(--normal-tint);color:var(--normal);}
+  .badge.mild{background:var(--mild-tint);color:var(--mild);}
+  .badge.deficit{background:var(--deficit-tint);color:var(--deficit);}
+  .metric-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    padding:4px 0;
+  }
+  .metric-row span.v{
+    font-family:var(--mono);
+    color:var(--ink);
+    font-weight:600;
+  }
+
+  .insight{
+    border-radius:4px;
+    padding:18px 20px;
+    background:var(--steel-tint);
+    border:1px solid #D6E4EA;
+  }
+  .insight .tag{
+    display:inline-block;
+    background:var(--highlight);
+    padding:2px 8px;
+    font-size:11px;
+    font-weight:600;
+    color:#4a4110;
+    border-radius:2px;
+    margin-bottom:10px;
+  }
+  .insight p{
+    margin:0;
+    font-size:14px;
+    line-height:1.65;
+    color:var(--ink);
+  }
+  footer.disclaimer{
+    margin-top:36px;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    max-width:760px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">RESEARCH PROTOTYPE — NOT FOR CLINICAL USE</p>
+    <h1>4-Pillar Respiratory Assessment</h1>
+    <p>A working simulation of the cross-sectional protocol: enter a hypothetical post-heart-transplant recipient's profile and see how Function, Strength, Endurance and Mobility might compare to a healthy reference, based on the independent variables the study proposes to test.</p>
+  </header>
+
+  <div class="layout">
+    <div class="panel form-panel">
+      <h2>Patient intake</h2>
+
+      <div class="field-group">
+        <span class="group-label">DEMOGRAPHICS</span>
+        <div class="field">
+          <label>Age <span class="val" id="ageVal">52</span></label>
+          <input type="range" id="age" min="18" max="75" value="52">
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <div class="toggle-row" id="genderToggle">
+            <button type="button" data-val="female" class="active">Female</button>
+            <button type="button" data-val="male">Male</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <span class="group-label">TRANSPLANT-RELATED FACTORS</span>
+        <div class="field">
+          <label>Months since transplant <span class="val" id="monthsVal">12</span></label>
+          <input type="range" id="months" min="6" max="60" value="12">
+        </div>
+        <div class="field">
+          <label>Immunosuppressant regimen</label>
+          <select id="regimen">
+            <option value="standard">Standard triple therapy</option>
+            <option value="intensified">Intensified (recent rejection episode)</option>
+            <option value="tapered">Tapered / stable long-term</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <span class="group-label">CLINICAL CHARACTERISTICS</span>
+        <label class="check-field">
+          <input type="checkbox" id="symptoms" checked>
+          Reports chronic cough, dyspnea or wheezing
+        </label>
+        <label class="check-field">
+          <input type="checkbox" id="sternotomy" checked>
+          Sternotomy-related chest wall restriction noted
+        </label>
+        <label class="check-field">
+          <input type="checkbox" id="comorbid">
+          Additional comorbidity (e.g. diabetes, renal impairment)
+        </label>
+      </div>
+
+      <button type="button" class="run-btn" id="runBtn">Run assessment</button>
+    </div>
+
+    <div class="panel results-panel">
+      <div id="emptyState" class="empty-state">
+        <div class="num">01</div>
+        <p>Set the patient profile on the left and run the assessment to generate simulated scores across the four pillars, benchmarked against a healthy-individual reference line — mirroring the study's core hypothesis.</p>
+      </div>
+
+      <div id="resultsContent" style="display:none;">
+        <div class="results-head">
+          <h2>Simulated 4-pillar profile</h2>
+          <span class="subject-id" id="subjectId">SUBJECT — SIM-001</span>
+        </div>
+
+        <div class="chart-row">
+          <div id="radarHolder"></div>
+          <div class="legend-note">
+            <div><span class="dot" style="background:var(--steel);"></span>Patient profile — simulated capacity, % of predicted healthy norm</div>
+            <div style="margin-top:6px;"><span class="dot" style="background:#B9C4CC;"></span>Healthy reference (100%)</div>
+            <div style="margin-top:10px;">Thresholds shown are illustrative for this prototype, not validated clinical cut-offs.</div>
+          </div>
+        </div>
+
+        <div class="pillar-grid" id="pillarGrid"></div>
+
+        <div class="insight">
+          <span class="tag">personalized</span>
+          <p id="insightText"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="disclaimer">
+    This is a functional prototype for demonstrating the assessment protocol's design — the scoring model is a simplified simulation for illustration, not a validated predictive algorithm, and should not be used to inform any real care decision. Measures shown (FVC/FEV1, MIP/MEP, handgrip, 6MWT, chest wall expansion) reflect the toolbox proposed in the protocol.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var subjectCounter = 1;
+  var gender = 'female';
+
+  document.getElementById('age').addEventListener('input', function(e){
+    document.getElementById('ageVal').textContent = e.target.value;
+  });
+  document.getElementById('months').addEventListener('input', function(e){
+    document.getElementById('monthsVal').textContent = e.target.value;
+  });
+
+  var genderButtons = document.querySelectorAll('#genderToggle button');
+  for(var i=0;i<genderButtons.length;i++){
+    genderButtons[i].addEventListener('click', function(){
+      for(var j=0;j<genderButtons.length;j++){ genderButtons[j].classList.remove('active'); }
+      this.classList.add('active');
+      gender = this.getAttribute('data-val');
+    });
+  }
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function jitter(seed){ return Math.sin(seed * 0.37) * 4; }
+
+  function statusFor(score){
+    if(score >= 85) return {label:'Normal', cls:'normal'};
+    if(score >= 70) return {label:'Mild impairment', cls:'mild'};
+    return {label:'Significant impairment', cls:'deficit'};
+  }
+
+  // Build an inline SVG radar chart with 4 axes, no external library needed.
+  function buildRadarSVG(scores){
+    var size = 300, cx = size/2, cy = size/2, maxR = 105;
+    var axes = ['Function','Strength','Endurance','Mobility'];
+    var values = [scores.function, scores.strength, scores.endurance, scores.mobility];
+    var maxScale = 110;
+
+    function pointFor(index, value){
+      var angle = (Math.PI * 2 * index / 4) - Math.PI/2;
+      var r = (value / maxScale) * maxR;
+      return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+    }
+    function labelPointFor(index){
+      var angle = (Math.PI * 2 * index / 4) - Math.PI/2;
+      var r = maxR + 22;
+      return { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) };
+    }
+
+    var gridRings = [0.25, 0.5, 0.75, 1].map(function(frac){
+      var pts = [];
+      for(var i=0;i<4;i++){
+        var p = pointFor(i, frac * maxScale);
+        pts.push(p.x.toFixed(1) + ',' + p.y.toFixed(1));
+      }
+      return '<polygon points="' + pts.join(' ') + '" fill="none" stroke="#E4E1D6" stroke-width="1"/>';
+    }).join('');
+
+    var axisLines = axes.map(function(_, i){
+      var p = pointFor(i, maxScale);
+      return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p.x.toFixed(1)+'" y2="'+p.y.toFixed(1)+'" stroke="#E4E1D6" stroke-width="1"/>';
+    }).join('');
+
+    var healthyPts = axes.map(function(_, i){
+      var p = pointFor(i, 100);
+      return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+    }).join(' ');
+
+    var patientPts = values.map(function(v, i){
+      var p = pointFor(i, v);
+      return p.x.toFixed(1) + ',' + p.y.toFixed(1);
+    }).join(' ');
+
+    var dots = values.map(function(v, i){
+      var p = pointFor(i, v);
+      return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="3.5" fill="#254D66"/>';
+    }).join('');
+
+    var labels = axes.map(function(name, i){
+      var p = labelPointFor(i);
+      var anchor = 'middle';
+      if(p.x < cx - 5) anchor = 'end';
+      if(p.x > cx + 5) anchor = 'start';
+      return '<text x="'+p.x.toFixed(1)+'" y="'+p.y.toFixed(1)+'" font-size="12.5" fill="#1B2430" text-anchor="'+anchor+'" dominant-baseline="middle" font-family="-apple-system, Segoe UI, Roboto, sans-serif">'+name+'</text>';
+    }).join('');
+
+    return '<svg width="'+size+'" height="'+(size+10)+'" viewBox="0 0 '+size+' '+(size+10)+'" xmlns="http://www.w3.org/2000/svg">' +
+      gridRings + axisLines +
+      '<polygon points="'+healthyPts+'" fill="none" stroke="#B9C4CC" stroke-width="1.5" stroke-dasharray="4,4"/>' +
+      '<polygon points="'+patientPts+'" fill="rgba(59,110,143,0.16)" stroke="#3B6E8F" stroke-width="2"/>' +
+      dots + labels +
+      '</svg>';
+  }
+
+  function runAssessment(){
+    var age = Number(document.getElementById('age').value);
+    var months = Number(document.getElementById('months').value);
+    var regimen = document.getElementById('regimen').value;
+    var symptoms = document.getElementById('symptoms').checked;
+    var sternotomy = document.getElementById('sternotomy').checked;
+    var comorbid = document.getElementById('comorbid').checked;
+
+    var timeFactor = clamp(months / 24, 0, 1);
+    var ageFactor = clamp((75 - age) / 57, 0, 1);
+    var regimenPenalty = regimen === 'intensified' ? 8 : (regimen === 'tapered' ? -4 : 0);
+
+    var functionScore = 58 + 34 * timeFactor - (symptoms ? 11 : 0) - regimenPenalty * 0.5 + jitter(months);
+    var strengthScore = 52 + 38 * timeFactor - (sternotomy ? 9 : 0) - regimenPenalty + jitter(age);
+    var enduranceScore = 48 + 30 * timeFactor + 14 * ageFactor - (comorbid ? 12 : 0) - regimenPenalty * 0.5 + jitter(months + age);
+    var mobilityScore = 62 + 24 * timeFactor + 10 * ageFactor - (sternotomy ? 10 : 0) + jitter(age * 1.3);
+
+    functionScore = clamp(functionScore, 20, 105);
+    strengthScore = clamp(strengthScore, 20, 105);
+    enduranceScore = clamp(enduranceScore, 20, 105);
+    mobilityScore = clamp(mobilityScore, 20, 105);
+
+    var scores = {function: functionScore, strength: strengthScore, endurance: enduranceScore, mobility: mobilityScore};
+
+    document.getElementById('radarHolder').innerHTML = buildRadarSVG(scores);
+    renderCards(scores, gender);
+    renderInsight(scores);
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultsContent').style.display = 'block';
+    document.getElementById('subjectId').textContent = 'SUBJECT — SIM-' + String(subjectCounter++).padStart(3, '0');
+  }
+
+  function renderCards(scores, gender){
+    var fvc = Math.round(50 + (scores.function/100) * 60);
+    var fev1 = Math.round(45 + (scores.function/100) * 65);
+    var mip = Math.round(40 + (scores.strength/100) * 60);
+    var mep = Math.round(50 + (scores.strength/100) * 90);
+    var grip = Math.round((gender === 'male' ? 22 : 15) + (scores.strength/100) * 25);
+    var mwt = Math.round(250 + (scores.endurance/100) * 350);
+    var chestExp = (2 + (scores.mobility/100) * 4).toFixed(1);
+    var shoulderRom = Math.round(90 + (scores.mobility/100) * 90);
+
+    var cards = [
+      {name:'Function', score:scores.function, metrics:[['FVC, % predicted', fvc + '%'], ['FEV1, % predicted', fev1 + '%']]},
+      {name:'Strength', score:scores.strength, metrics:[['MIP / MEP', mip + ' / ' + mep + ' cmH\u2082O'], ['Handgrip', grip + ' kg']]},
+      {name:'Endurance', score:scores.endurance, metrics:[['6MWT distance', mwt + ' m'], ['vs. healthy norm', Math.round(scores.endurance) + '%']]},
+      {name:'Mobility', score:scores.mobility, metrics:[['Chest wall expansion', chestExp + ' cm'], ['Shoulder flexion ROM', shoulderRom + '\u00b0']]}
+    ];
+
+    var grid = document.getElementById('pillarGrid');
+    grid.innerHTML = '';
+    cards.forEach(function(c){
+      var st = statusFor(c.score);
+      var card = document.createElement('div');
+      card.className = 'pillar-card';
+      var metricsHtml = c.metrics.map(function(m){
+        return '<div class="metric-row"><span>'+m[0]+'</span><span class="v">'+m[1]+'</span></div>';
+      }).join('');
+      card.innerHTML =
+        '<div class="top">' +
+          '<span class="name">'+c.name+'</span>' +
+          '<span class="badge '+st.cls+'">'+st.label+'</span>' +
+        '</div>' + metricsHtml;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderInsight(scores){
+    var entries = [
+      ['Function', scores.function],
+      ['Strength', scores.strength],
+      ['Endurance', scores.endurance],
+      ['Mobility', scores.mobility]
+    ];
+    entries.sort(function(a,b){ return a[1] - b[1]; });
+    var weakest = entries[0];
+    var st = statusFor(weakest[1]);
+    var text = st.cls === 'normal'
+      ? ('All four pillars fall within the normal range for this profile — ' + weakest[0].toLowerCase() + ' is the relative low point but not flagged as impaired. A maintenance-focused rehab plan would likely suffice.')
+      : (weakest[0] + ' is the weakest pillar (' + st.label.toLowerCase() + ') for this profile. A rehab plan tailored to this deficit — rather than a generic protocol — is where the 4-pillar framework is meant to add value.');
+    document.getElementById('insightText').textContent = text;
+  }
+
+  document.getElementById('runBtn').addEventListener('click', runAssessment);
+})();
+</script>
+</body>
+</html>
